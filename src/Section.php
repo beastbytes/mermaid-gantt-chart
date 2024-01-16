@@ -8,16 +8,20 @@ declare(strict_types=1);
 
 namespace BeastBytes\Mermaid\GanttChart;
 
+use BeastBytes\Mermaid\CommentTrait;
 use BeastBytes\Mermaid\RenderItemsTrait;
 
 final class Section
 {
+    use CommentTrait;
     use RenderItemsTrait;
 
     private const TYPE = 'section';
 
     /** @psalm-var list<Milestone|Task> array  */
     private array $items = [];
+    /** @psalm-var list<Task> array  */
+    private array $tasks = [];
 
     public function __construct(private readonly string $title)
     {
@@ -27,6 +31,13 @@ final class Section
     {
         $new = clone $this;
         $new->items = array_merge($new->items, $item);
+
+        foreach ($item as $i) {
+            if ($i instanceof Task) {
+                $this->tasks[] = $i;
+            }
+        }
+
         return $new;
     }
 
@@ -34,6 +45,13 @@ final class Section
     {
         $new = clone $this;
         $new->items = $item;
+
+        foreach ($item as $i) {
+            if ($i instanceof Task) {
+                $this->tasks[] = $i;
+            }
+        }
+
         return $new;
     }
 
@@ -41,8 +59,9 @@ final class Section
     {
         $output = [];
 
+        $this->renderComment($indentation, $output);
         $output[] = $indentation . self::TYPE . ' ' . $this->title;
-        $output[] = $this->renderItems($this->items, $indentation);
+        $this->renderItems($this->items, $indentation, $output);
 
         return implode("\n", $output);
     }

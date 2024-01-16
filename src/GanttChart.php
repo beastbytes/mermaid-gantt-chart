@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace BeastBytes\Mermaid\GanttChart;
 
+use BeastBytes\Mermaid\CommentTrait;
+use BeastBytes\Mermaid\InteractionRendererTrait;
 use BeastBytes\Mermaid\Mermaid;
 use BeastBytes\Mermaid\MermaidInterface;
 use BeastBytes\Mermaid\RenderItemsTrait;
@@ -15,12 +17,16 @@ use Stringable;
 
 final class GanttChart implements MermaidInterface, Stringable
 {
+    use CommentTrait;
+    use InteractionRendererTrait;
     use RenderItemsTrait;
 
     private const TYPE = 'gantt';
 
     /** @psalm-var list<Milestone|Section|Task> array  */
     private array $items = [];
+    /** @psalm-var list<Task> array  */
+    private array $tasks = [];
 
     public function __construct(
         private readonly string $title = '',
@@ -43,6 +49,13 @@ final class GanttChart implements MermaidInterface, Stringable
     {
         $new = clone $this;
         $new->items = array_merge($new->items, $item);
+
+        foreach ($item as $i) {
+            if ($i instanceof Task) {
+                $this->tasks[] = $i;
+            }
+        }
+
         return $new;
     }
 
@@ -50,6 +63,13 @@ final class GanttChart implements MermaidInterface, Stringable
     {
         $new = clone $this;
         $new->items = $item;
+
+        foreach ($item as $i) {
+            if ($i instanceof Task) {
+                $this->tasks[] = $i;
+            }
+        }
+
         return $new;
     }
 
@@ -63,6 +83,7 @@ final class GanttChart implements MermaidInterface, Stringable
             $output[] = '---';
         }
 
+        $this->renderComment('', $output);
         $output[] = self::TYPE;
 
         foreach (['title', 'dateFormat', 'axisFormat', 'excludes', 'tickInterval', 'weekday'] as $param) {
@@ -72,7 +93,8 @@ final class GanttChart implements MermaidInterface, Stringable
         }
 
         $output[] = '';
-        $output[] = $this->renderItems($this->items, '');
+        $this->renderItems($this->items, '', $output);
+        $this->renderInteractions($this->tasks, $output);
 
         return Mermaid::render($output);
     }
