@@ -73,7 +73,7 @@ final class GanttChart implements MermaidInterface, Stringable
         return $new;
     }
 
-    public function render(): string
+    public function render(array $attributes = []): string
     {
         $output = [];
 
@@ -96,6 +96,6 @@ final class GanttChart implements MermaidInterface, Stringable
         $this->renderItems($this->items, '', $output);
         $this->renderInteractions($this->tasks, $output);
 
-        return Mermaid::render($output);
+        return Mermaid::render($output, $attributes);
     }
 }
